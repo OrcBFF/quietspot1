@@ -1,0 +1,116 @@
+QuietSpot Data Trust Policy
+============================
+
+This document explains how QuietSpot determines noise level predictions for each cafeteria
+based on measurement history and data freshness.
+
+Policy Overview
+---------------
+QuietSpot uses a tiered system that adapts prediction sophistication based on:
+- Age of most recent measurement
+- Total number of historical measurements
+- Time-of-day and day-of-week patterns
+
+
+Tier 1: Fresh Data (< 60 minutes old)
+======================================
+Confidence: HIGHEST
+Method: Direct measurement
+
+When a cafe has a measurement less than 60 minutes old, we trust it completely.
+No prediction algorithms needed - we show the actual measured value.
+
+Example: Cafe measured at 65 dB 30 minutes ago → Display: 65 dB
+
+
+Tier 2: Confident Prediction (40+ measurements)
+================================================
+Confidence: HIGH
+Method: Advanced temporal filtering with exponential decay
+
+This tier uses sophisticated analysis for cafes with substantial measurement history.
+
+Filtering:
+- Time-of-day matching (e.g., only use 2-4pm data to predict 3pm noise)
+- Weekday vs weekend patterns (Saturdays differ from Tuesdays)
+- Last 30 days of data only
+
+Weighting:
+- Exponential time decay: newer measurements weighted more heavily
+- Recent 14 days: 2x weight multiplier
+- Creates smooth curve favoring recent trends
+
+Best for: Popular cafes with consistent crowdsourcing
+
+
+Tier 3: Moderate Confidence (20-39 measurements)
+=================================================
+Confidence: MEDIUM
+Method: Time period filtering with recency weighting
+
+This tier uses simpler temporal analysis for cafes with moderate history.
+
+Filtering:
+- Time period matching only (broader time windows)
+- Last 30 days of data
+
+Weighting:
+- Recency weighting applied (but simpler than Tier 2)
+- No weekday/weekend distinction
+
+Best for: Moderately popular cafes building measurement history
+
+
+Tier 4: Limited Data (< 20 measurements)
+=========================================
+Confidence: LOW
+Method: Simple average
+
+For new cafes or those with sparse data, we use a basic average of all
+available measurements.
+
+No filtering or weighting applied.
+
+Best for: Newly added cafes or rarely visited locations
+
+
+Implementation Notes
+====================
+
+1. Confidence Display:
+   Consider showing users the confidence level in the UI so they understand
+   prediction reliability (e.g., "High confidence" badge or "Limited data" warning)
+
+2. Data Decay:
+   Older measurements naturally become less relevant. The exponential decay
+   ensures cafe environment changes (renovations, policy changes) are reflected.
+
+3. Cold Start Problem:
+   New cafes start at Tier 4 and improve as users contribute measurements.
+   Encourage early adopters to take multiple measurements!
+
+4. Temporal Patterns:
+   Cafes have predictable noise patterns:
+   - Morning coffee rush (8-10am): busy/loud
+   - Afternoon lull (2-4pm): quieter
+   - Weekend mornings: different crowd patterns
+   
+   Higher tiers capture these patterns automatically.
+
+
+Measurement Thresholds
+=======================
+Fresh measurement cutoff: 60 minutes
+High confidence threshold: 40+ measurements  
+Medium confidence threshold: 20-39 measurements
+Low confidence threshold: < 20 measurements
+Historical window: 30 days
+Recent data boost: Last 14 days (2x weight)
+
+
+Future Improvements
+===================
+- Consider special events (holidays, exam periods)
+- Factor in weather data (outdoor seating noise)
+- Machine learning to discover cafe-specific patterns
+- User feedback loop to validate predictions

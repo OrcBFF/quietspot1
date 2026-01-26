@@ -1,0 +1,13 @@
+# Backend files
+node_modules/
+.env
+*.log
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
