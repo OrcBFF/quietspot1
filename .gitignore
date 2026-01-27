@@ -1,0 +1,63 @@
+# Flutter/Dart
+quietspot/build/
+quietspot/.dart_tool/
+quietspot/.flutter-plugins
+quietspot/.flutter-plugins-dependencies
+quietspot/.packages
+quietspot/*.iml
+
+# Flutter Build & Generated Files
+quietspot/.flutter-plugins
+quietspot/.flutter-plugins-dependencies
+quietspot/ios/Flutter/Generated.xcconfig
+quietspot/ios/Flutter/flutter_export_environment.sh
+quietspot/ios/Flutter/ephemeral/
+quietspot/ios/.symlinks/
+quietspot/macos/Flutter/ephemeral/
+quietspot/linux/flutter/ephemeral/
+quietspot/windows/flutter/ephemeral/
+
+# Gradle (Android)
+quietspot/android/.gradle/
+quietspot/android/gradle/
+quietspot/android/gradlew
+quietspot/android/gradlew.bat
+quietspot/android/local.properties
+quietspot/android/.idea/
+quietspot/android/captures/
+quietspot/android/app/build/
+quietspot/android/build/
+
+# Generated plugin registrants
+quietspot/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+quietspot/ios/Runner/GeneratedPluginRegistrant.*
+quietspot/linux/flutter/generated_*.cc
+quietspot/macos/Runner/GeneratedPluginRegistrant.swift
+
+# APK files
+*.apk
+*.aab
+*.ipa
+
+# Backend
+backend/node_modules/
+backend/.env
+backend/server.log
+
+# Debug & Temp
+debug/
+dummy/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# AI Artifacts
+.gemini/
+
+# OS
+.DS_Store
+Thumbs.db
