@@ -413,8 +413,11 @@ router.put('/:id', async (req, res) => {
         `, [req.params.id]);
 
         // Merge database data with computed noise data
+        // Convert DECIMAL values to numbers (MySQL returns them as strings)
         const locationData = {
             ...rows[0],
+            latitude: parseFloat(rows[0].latitude),
+            longitude: parseFloat(rows[0].longitude),
             noiseDb: noiseData.noiseDb,
             measurements_count: noiseData.measurementCount,
             trustTier: noiseData.trustTier,
