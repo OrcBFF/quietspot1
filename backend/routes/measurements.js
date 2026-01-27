@@ -4,8 +4,8 @@ const db = require('../db');
 
 // Get all measurements for a location
 router.get('/location/:locationId', async (req, res) => {
-    try {
-        const [rows] = await db.execute(`
+  try {
+    const [rows] = await db.execute(`
       SELECT 
         measurement_id as id,
         location_id as spotId,
@@ -17,41 +17,52 @@ router.get('/location/:locationId', async (req, res) => {
       ORDER BY measured_at DESC
     `, [req.params.locationId]);
 
-        res.json(rows);
-    } catch (error) {
-        console.error('Error fetching measurements:', error);
-        res.status(500).json({ error: 'Failed to fetch measurements' });
-    }
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching measurements:', error);
+    res.status(500).json({ error: 'Failed to fetch measurements' });
+  }
 });
 
 // Create new measurement
 router.post('/', async (req, res) => {
-    try {
-        const { locationId, userId, noiseDb } = req.body;
+  try {
+    const { locationId, userId, noiseDb } = req.body;
 
-        if (!locationId || noiseDb === undefined) {
-            return res.status(400).json({ error: 'locationId and noiseDb are required' });
-        }
+    // REQUIRE authentication - no guest measurements allowed
+    if (!locationId || noiseDb === undefined || !userId) {
+      return res.status(400).json({
+        error: 'locationId, userId, and noiseDb are required'
+      });
+    }
 
-        // Use default user_id = NULL if not valid integer (Guest)
-        let finalUserId = userId;
-        if (!Number.isInteger(finalUserId)) {
-            finalUserId = null;
-        } else if (finalUserId) {
-            // Verify user exists
-            const [userCheck] = await db.execute('SELECT user_id FROM users WHERE user_id = ?', [finalUserId]);
-            if (userCheck.length === 0) {
-                finalUserId = null;
-            }
-        }
+    // Validate userId is a positive integer
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({
+        error: 'userId must be a valid positive integer'
+      });
+    }
 
-        const [result] = await db.execute(`
+    // Verify user exists - REJECT if not found
+    const [userCheck] = await db.execute(
+      'SELECT user_id FROM users WHERE user_id = ?',
+      [userId]
+    );
+
+    if (userCheck.length === 0) {
+      return res.status(403).json({
+        error: 'User not found. Please log in to add measurements.'
+      });
+    }
+
+    // Insert measurement with authenticated user
+    const [result] = await db.execute(`
       INSERT INTO noise_measurements (location_id, user_id, db_value)
       VALUES (?, ?, ?)
-    `, [locationId, finalUserId, noiseDb]);
+    `, [locationId, userId, noiseDb]);
 
-        // Fetch the created measurement
-        const [rows] = await db.execute(`
+    // Fetch the created measurement
+    const [rows] = await db.execute(`
       SELECT 
         measurement_id as id,
         location_id as spotId,
@@ -62,24 +73,24 @@ router.post('/', async (req, res) => {
       WHERE measurement_id = ?
     `, [result.insertId]);
 
-        res.status(201).json(rows[0]);
-    } catch (error) {
-        console.error('Error creating measurement:', error);
-        res.status(500).json({ error: 'Failed to create measurement' });
-    }
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    console.error('Error creating measurement:', error);
+    res.status(500).json({ error: 'Failed to create measurement' });
+  }
 });
 
 // Get measurements for validation (nearby locations)
 router.get('/nearby', async (req, res) => {
-    try {
-        const { latitude, longitude, radiusMeters = 100 } = req.query;
+  try {
+    const { latitude, longitude, radiusMeters = 100 } = req.query;
 
-        if (!latitude || !longitude) {
-            return res.status(400).json({ error: 'latitude and longitude are required' });
-        }
+    if (!latitude || !longitude) {
+      return res.status(400).json({ error: 'latitude and longitude are required' });
+    }
 
-        // Get nearby locations and their average measurements
-        const [rows] = await db.execute(`
+    // Get nearby locations and their average measurements
+    const [rows] = await db.execute(`
       SELECT 
         l.location_id,
         l.latitude,
@@ -99,11 +110,11 @@ router.get('/nearby', async (req, res) => {
       HAVING measurementCount > 0
     `, [latitude, longitude, latitude, radiusMeters]);
 
-        res.json(rows);
-    } catch (error) {
-        console.error('Error fetching nearby measurements:', error);
-        res.status(500).json({ error: 'Failed to fetch nearby measurements' });
-    }
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching nearby measurements:', error);
+    res.status(500).json({ error: 'Failed to fetch nearby measurements' });
+  }
 });
 
 module.exports = router;
