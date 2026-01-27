@@ -364,6 +364,70 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Update location (primarily for noise statistics after measurements)
+router.put('/:id', async (req, res) => {
+    try {
+        const { name, description, latitude, longitude, address, city, postal_code, place_type, avg_db, measurements_count } = req.body;
+
+        // Build dynamic update query
+        const updates = [];
+        const values = [];
+
+        if (name !== undefined) { updates.push('name = ?'); values.push(name); }
+        if (description !== undefined) { updates.push('description = ?'); values.push(description); }
+        if (latitude !== undefined) { updates.push('latitude = ?'); values.push(latitude); }
+        if (longitude !== undefined) { updates.push('longitude = ?'); values.push(longitude); }
+        if (address !== undefined) { updates.push('address = ?'); values.push(address); }
+        if (city !== undefined) { updates.push('city = ?'); values.push(city); }
+        if (postal_code !== undefined) { updates.push('postal_code = ?'); values.push(postal_code); }
+        if (place_type !== undefined) { updates.push('place_type = ?'); values.push(place_type); }
+        if (avg_db !== undefined) { updates.push('avg_db = ?'); values.push(avg_db); }
+        if (measurements_count !== undefined) { updates.push('measurements_count = ?'); values.push(measurements_count); }
+
+        if (updates.length === 0) {
+            return res.status(400).json({ error: 'No fields to update' });
+        }
+
+        values.push(req.params.id);
+
+        const [result] = await db.execute(`
+            UPDATE locations 
+            SET ${updates.join(', ')}
+            WHERE location_id = ?
+        `, values);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Location not found' });
+        }
+
+        // Fetch updated location
+        const [rows] = await db.execute(`
+            SELECT 
+                l.location_id as id,
+                l.name,
+                l.description,
+                l.latitude,
+                l.longitude,
+                l.address as location,
+                l.city,
+                l.postal_code,
+                l.avg_db as noiseDb,
+                l.measurements_count,
+                l.place_type,
+                l.is_open,
+                l.created_at,
+                l.updated_at
+            FROM locations l
+            WHERE l.location_id = ?
+        `, [req.params.id]);
+
+        res.json(rows[0]);
+    } catch (error) {
+        console.error('Error updating location:', error);
+        res.status(500).json({ error: 'Failed to update location' });
+    }
+});
+
 // Delete location
 router.delete('/:id', async (req, res) => {
     try {
