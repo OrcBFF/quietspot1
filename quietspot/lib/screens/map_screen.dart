@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -33,6 +34,7 @@ class _MapScreenState extends State<MapScreen> {
   double _zoom = 13.0;
   LatLng? _userLocation;
   double _mapRotation = 0.0; // Track map rotation in degrees
+  Timer? _autoRefreshTimer; // Periodic refresh timer
 
   // Filter state
   int _filterMaxNoise = 5; // 1-5, default 5 = show all
@@ -54,6 +56,13 @@ class _MapScreenState extends State<MapScreen> {
     _loadSpots();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initLocation();
+    });
+    
+    // Start periodic auto-refresh (every 60 seconds)
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted && !_isLoading) {
+        _loadSpots();
+      }
     });
   }
 
@@ -173,6 +182,9 @@ class _MapScreenState extends State<MapScreen> {
 
     if (created != null) {
       await _upsertSpot(created);
+      // Immediate refresh for user feedback (freshness badge update)
+      // Other users' updates are synced via periodic auto-refresh
+      await _loadSpots();
     }
   }
 
@@ -590,6 +602,9 @@ class _MapScreenState extends State<MapScreen> {
     
     if (created != null) {
       await _upsertSpot(created);
+      // Immediate refresh for user feedback (freshness badge update)
+      // Other users' updates are synced via periodic auto-refresh
+      await _loadSpots();
     }
   }
 
@@ -759,6 +774,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    _autoRefreshTimer?.cancel();
     _mapController.dispose();
     super.dispose();
   }
