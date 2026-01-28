@@ -6,7 +6,6 @@ import 'package:quietspot/models/quiet_spot.dart';
 
 import 'package:quietspot/screens/spot_detail_screen.dart';
 import 'package:quietspot/services/api_service.dart';
-import 'package:quietspot/services/geocoding_service.dart';
 import 'package:quietspot/services/location_service.dart';
 import 'package:quietspot/screens/quick_add_spot_dialog.dart';
 import 'package:quietspot/services/prediction_service.dart';
@@ -27,18 +26,12 @@ class _MapScreenState extends State<MapScreen> {
   );
   final MapController _mapController = MapController();
   final LocationService _locationService = LocationService();
-  final GeocodingService _geocodingService = GeocodingService();
-  final TextEditingController _searchController = TextEditingController();
   
   List<QuietSpot> _spots = [];
   bool _isLoading = true;
   LatLng _center = const LatLng(37.9838, 23.7275); // Default to Athens, Greece
   double _zoom = 13.0;
   LatLng? _userLocation;
-  LatLng? _selectedLocation; // For pin placement
-  List<GeocodingResult> _searchResults = [];
-  bool _isSearching = false;
-  bool _showSearchResults = false;
   double _mapRotation = 0.0; // Track map rotation in degrees
 
   // Filter state
@@ -62,17 +55,9 @@ class _MapScreenState extends State<MapScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initLocation();
     });
-    _searchController.addListener(_onSearchChanged);
   }
 
-  void _onSearchChanged() {
-    if (_searchController.text.isEmpty) {
-      setState(() {
-        _showSearchResults = false;
-        _searchResults = [];
-      });
-    }
-  }
+
 
   Future<void> _loadSpots() async {
     setState(() {
@@ -171,169 +156,7 @@ class _MapScreenState extends State<MapScreen> {
     return false;
   }
 
-  Future<void> _searchAddress(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _showSearchResults = false;
-        _searchResults = [];
-      });
-      return;
-    }
 
-    setState(() {
-      _isSearching = true;
-      _showSearchResults = true;
-    });
-
-    final results = await _geocodingService.searchAddress(query);
-    
-    if (mounted) {
-      setState(() {
-        _searchResults = results;
-        _isSearching = false;
-      });
-      
-      // If no results, show option to enter coordinates manually
-      if (results.isEmpty && query.isNotEmpty) {
-        _showManualCoordinateDialog(query);
-      }
-    }
-  }
-
-  Future<void> _showManualCoordinateDialog(String searchQuery) async {
-    final latController = TextEditingController();
-    final lonController = TextEditingController();
-    
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(searchQuery.isEmpty 
-            ? 'Enter Coordinates Manually' 
-            : 'No Results Found'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (searchQuery.isNotEmpty) ...[
-                Text(
-                  'Could not find "$searchQuery".',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-              ],
-              const Text(
-                'Enter coordinates manually:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: latController,
-                decoration: const InputDecoration(
-                  labelText: 'Latitude',
-                  hintText: 'e.g., 37.9838',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: lonController,
-                decoration: const InputDecoration(
-                  labelText: 'Longitude',
-                  hintText: 'e.g., 23.7275',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              ),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: () {
-                  // Get current map center as suggestion
-                  final center = _mapController.camera.center;
-                  latController.text = center.latitude.toStringAsFixed(6);
-                  lonController.text = center.longitude.toStringAsFixed(6);
-                },
-                icon: const Icon(Icons.my_location, size: 18),
-                label: const Text('Use current map center'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final lat = double.tryParse(latController.text);
-              final lon = double.tryParse(lonController.text);
-              
-              if (lat != null && lon != null && 
-                  lat >= -90 && lat <= 90 && 
-                  lon >= -180 && lon <= 180) {
-                Navigator.of(context).pop(true);
-                _selectManualLocation(LatLng(lat, lon), searchQuery);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter valid coordinates\nLatitude: -90 to 90\nLongitude: -180 to 180'),
-                  ),
-                );
-              }
-            },
-            child: const Text('Use Coordinates'),
-          ),
-        ],
-      ),
-    );
-    
-    latController.dispose();
-    lonController.dispose();
-  }
-
-  Future<void> _selectManualLocation(LatLng location, String query) async {
-    setState(() {
-      _selectedLocation = location;
-      _showSearchResults = false;
-      _searchController.text = query;
-    });
-    
-    // Move map to location
-    _mapController.move(location, 15.0);
-    setState(() {
-      _mapRotation = _mapController.camera.rotation;
-    });
-    
-    // Get address for this location
-    final address = await _geocodingService.getAddressFromCoordinates(location);
-    if (address != null && mounted) {
-      _searchController.text = address;
-    }
-    
-    FocusScope.of(context).unfocus();
-    
-    // Show option to create spot
-    _showCreateSpotDialog(location);
-  }
-
-  void _selectSearchResult(GeocodingResult result) {
-    setState(() {
-      _selectedLocation = result.coordinates;
-      _showSearchResults = false;
-      _searchController.text = result.displayName;
-    });
-    
-    // Move map to selected location
-    _mapController.move(result.coordinates, 15.0);
-    setState(() {
-      _mapRotation = _mapController.camera.rotation;
-    });
-    
-    // Focus search field to hide keyboard
-    FocusScope.of(context).unfocus();
-  }
 
   void _onMapTap(TapPosition tapPosition, LatLng point) {
     // Tapping on empty map space does nothing
@@ -688,22 +511,6 @@ class _MapScreenState extends State<MapScreen> {
       }
     }
     
-    // Add selected location pin (temporary marker when placing)
-    if (_selectedLocation != null) {
-      markers.add(
-        Marker(
-          point: _selectedLocation!,
-          width: 50,
-          height: 50,
-          child: const Icon(
-            Icons.place,
-            color: Colors.blue,
-            size: 40,
-          ),
-        ),
-      );
-    }
-    
     // Add user location marker if available
     if (_userLocation != null) {
       markers.add(
@@ -803,56 +610,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0,
-        title: Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search address...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _isSearching
-                  ? const Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _showSearchResults = false;
-                              _selectedLocation = null;
-                            });
-                          },
-                        )
-                      : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 0,
-              ),
-            ),
-            onSubmitted: _searchAddress,
-            onChanged: (value) {
-              if (value.isNotEmpty) {
-                _searchAddress(value);
-              } else {
-                setState(() {
-                  _showSearchResults = false;
-                  _selectedLocation = null;
-                });
-              }
-            },
-          ),
-        ),
+        title: const Text('QuietSpot'),
         actions: [
           // Refresh button
           IconButton(
@@ -972,73 +730,7 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ],
             ),
-          // Search results overlay
-          if (_showSearchResults)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: _searchResults.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.search_off, size: 48, color: Colors.grey),
-                            const SizedBox(height: 8),
-                            Text(
-                              'No results found',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Try a different search or tap the map to place a pin',
-                              style: Theme.of(context).textTheme.bodySmall,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _searchResults.length,
-                        itemBuilder: (context, index) {
-                          final result = _searchResults[index];
-                          return ListTile(
-                            leading: const Icon(Icons.location_on),
-                            title: Text(
-                              result.displayName,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: result.provider != 'unknown'
-                                ? Text(
-                                    'via ${result.provider}',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.grey,
-                                      fontSize: 10,
-                                    ),
-                                  )
-                                : null,
-                            onTap: () => _selectSearchResult(result),
-                          );
-                        },
-                      ),
-              ),
-            ),
+
           // Compass button
           Positioned(
             top: 16,
@@ -1067,7 +759,6 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     _mapController.dispose();
     super.dispose();
   }
