@@ -168,9 +168,19 @@ class _QuickAddSpotDialogState extends State<QuickAddSpotDialog> {
            setState(() {
              _address = result.displayName;
              _placeType = result.placeType;
-             // Heuristic for name
-             if (!result.displayName.startsWith(result.street ?? '')) {
-                _name = result.displayName.split(',').first;
+             
+             // Smart name pre-fill: Only suggest if first part doesn't contain numbers
+             // This avoids street addresses (e.g., "Ιουλιανού 60") and keeps POI names (e.g., "Starbucks")
+             String firstPart = result.displayName.split(',').first.trim();
+             
+             if (RegExp(r'\d').hasMatch(firstPart)) {
+               // Contains number → likely street address → leave empty for user to fill
+               _name = '';
+             } else {
+               // No numbers → likely POI/place name → pre-fill with length limit
+               _name = firstPart.length > 30 
+                   ? firstPart.substring(0, 30) + '...' 
+                   : firstPart;
              }
            });
         }
@@ -705,9 +715,11 @@ class _QuickAddSpotDialogState extends State<QuickAddSpotDialog> {
              // Name
              TextFormField(
                initialValue: _name,
-               decoration: const InputDecoration(
+               decoration: InputDecoration(
                  labelText: 'Name (Optional)',
-                 border: OutlineInputBorder(),
+                 hintText: _name.isEmpty ? 'e.g., My Favorite Cafe' : null,
+                 helperText: _name.isEmpty ? 'Give this spot a memorable name' : null,
+                 border: const OutlineInputBorder(),
                  isDense: true,
                ),
                onSaved: (v) => _name = v ?? '',
