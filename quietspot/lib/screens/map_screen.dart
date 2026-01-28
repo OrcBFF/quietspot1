@@ -854,6 +854,18 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
         actions: [
+          // Refresh button
+          IconButton(
+            icon: _isLoading 
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
+            tooltip: 'Refresh locations',
+            onPressed: _isLoading ? null : _loadSpots,
+          ),
           // Filter button with badge
           Stack(
             children: [
@@ -891,14 +903,8 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadSpots,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height - kToolbarHeight,
-            child: Stack(
-              children: [
+      body: Stack(
+        children: [
           if (!_hasMapboxToken)
             const Center(
               child: Padding(
@@ -1048,10 +1054,7 @@ class _MapScreenState extends State<MapScreen> {
               },
             ),
           ),
-              ],
-            ),
-          ),
-        ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: "map_fab",
