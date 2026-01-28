@@ -255,6 +255,13 @@ router.get('/:id', async (req, res) => {
         const row = rows[0];
         const prediction = await calculateNoiseLevel(row.id);
 
+        // Get the latest measurement timestamp
+        const [measurementInfo] = await db.execute(`
+      SELECT MAX(measured_at) as latest_measurement
+      FROM noise_measurements
+      WHERE location_id = ?
+    `, [row.id]);
+
         const spot = {
             id: row.id.toString(),
             name: row.name,
@@ -265,6 +272,7 @@ router.get('/:id', async (req, res) => {
             trustTier: prediction.trustTier,
             confidence: prediction.confidence,
             measurementCount: prediction.measurementCount,
+            lastUpdated: measurementInfo[0].latest_measurement ? measurementInfo[0].latest_measurement.toISOString() : null,
         };
 
         res.json(spot);
@@ -346,6 +354,13 @@ router.post('/', async (req, res) => {
         const row = rows[0];
         const prediction = await calculateNoiseLevel(newId);
 
+        // Get the latest measurement timestamp for fresh data calculation
+        const [measurementInfo] = await db.execute(`
+      SELECT MAX(measured_at) as latest_measurement
+      FROM noise_measurements
+      WHERE location_id = ?
+    `, [newId]);
+
         const spot = {
             id: row.id.toString(),
             name: row.name,
@@ -355,6 +370,8 @@ router.post('/', async (req, res) => {
             noiseDb: prediction.noiseDb,
             trustTier: prediction.trustTier,
             confidence: prediction.confidence,
+            measurementCount: prediction.measurementCount,
+            lastUpdated: measurementInfo[0].latest_measurement ? measurementInfo[0].latest_measurement.toISOString() : null,
         };
 
         res.json(spot);
