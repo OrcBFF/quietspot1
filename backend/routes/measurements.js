@@ -55,6 +55,18 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Verify location exists - REJECT if not found
+    const [locationCheck] = await db.execute(
+      'SELECT location_id FROM locations WHERE location_id = ?',
+      [locationId]
+    );
+
+    if (locationCheck.length === 0) {
+      return res.status(404).json({
+        error: 'Location not found. The location may have been deleted or does not exist.'
+      });
+    }
+
     // Insert measurement with authenticated user
     const [result] = await db.execute(`
       INSERT INTO noise_measurements (location_id, user_id, db_value)

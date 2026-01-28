@@ -891,8 +891,14 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
+      body: RefreshIndicator(
+        onRefresh: _loadSpots,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - kToolbarHeight,
+            child: Stack(
+              children: [
           if (!_hasMapboxToken)
             const Center(
               child: Padding(
@@ -1042,7 +1048,10 @@ class _MapScreenState extends State<MapScreen> {
               },
             ),
           ),
-        ],
+              ],
+            ),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: "map_fab",
