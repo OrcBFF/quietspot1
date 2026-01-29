@@ -18,7 +18,7 @@
 
 1. **Λήψη APK**
    - Κατεβάστε το αρχείο `app-release.apk` από:
-     -από το φάκελο υποβολής: `QuietSpot/quietspot/build/app/outputs/flutter-apk/app-release.apk`
+     - από το φάκελο: `releases/app-release.apk`
 
 2. **Ενεργοποίηση "Άγνωστων Πηγών"**
    - Μεταβείτε στις **Ρυθμίσεις** → **Ασφάλεια**
@@ -167,7 +167,7 @@
 
 #### 📦 APK Release
 - **Location**: Περιλαμβάνεται στο φάκελο υποβολής
-- **Path**: `QuietSpot/quietspot/build/app/outputs/flutter-apk/app-release.apk`
+- **Path**: `releases/app-release.apk`
 - **Filename**: `app-release.apk`
 - **Size**: 53.2 MB
 - **Version**: 1.0.0
