@@ -206,7 +206,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                     const Icon(Icons.access_time, size: 20),
                     const SizedBox(height: 8),
                     Text(
-                      'Last updated: ${DateFormat('MMM d, HH:mm').format(widget.spot.lastUpdated!)}'
+                      'Last updated: ${DateFormat('MMM d, HH:mm').format(widget.spot.lastUpdated!.toLocal())}'
                       '${widget.spot.noiseDb != null ? " (${widget.spot.noiseDb!.toStringAsFixed(1)} dB)" : ""}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey[700],
