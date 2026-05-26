@@ -1,376 +1,353 @@
-# QuietSpot - Τρίτη Φάση: Λειτουργικό Demo
+<p align="center">
+  <img src="docs/images/banner.png" alt="QuietSpot Banner" width="600"/>
+</p>
 
-## Περιγραφή
-Το QuietSpot είναι μια εφαρμογή Flutter που βοηθά τους χρήστες να βρίσκουν ήσυχα μέρη (καφετέριες, χώρους εργασίας) με βάση τα επίπεδα θορύβου. Η εφαρμογή χρησιμοποιεί crowdsourced μετρήσεις θορύβου και έξυπνη πρόβλεψη για να παρέχει αξιόπιστες πληροφορίες.
+<h3 align="center">Find quiet places. Backed by real data.</h3>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#data-trust-algorithm">Algorithm</a> •
+  <a href="#measurement-integrity">Integrity Pipeline</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#api-reference">API</a> •
+  <a href="#roadmap">Roadmap</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter" alt="Flutter"/>
+  <img src="https://img.shields.io/badge/Node.js-Express-339933?logo=node.js" alt="Node.js"/>
+  <img src="https://img.shields.io/badge/Database-TiDB_Cloud-4A154B" alt="TiDB"/>
+  <img src="https://img.shields.io/badge/Maps-Mapbox_GL-000000?logo=mapbox" alt="Mapbox"/>
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android" alt="Android"/>
+</p>
 
 ---
 
-## Α. Οδηγίες Εγκατάστασης και Χρήσης
+## The Problem
 
-### Προϋποθέσεις
-- **Android συσκευή** με έκδοση Android 6.0 (API level 23) ή νεότερη
-- **Σύνδεση στο Internet** (για λήψη δεδομένων από το backend API)
-- **Άδειες συσκευής**: Τοποθεσία (Location) και Μικρόφωνο (για μετρήσεις θορύβου)
+Finding a quiet place to work, study, or just think shouldn't require trial and error. Noise levels at cafés, libraries, and co-working spaces change throughout the day — and no existing platform captures this data in a way that's **verifiable**, **temporal**, and **trustworthy**.
 
-### Βήματα Εγκατάστασης
+**QuietSpot** solves this by turning every smartphone into a calibrated noise sensor, building a crowdsourced map of urban noise levels with a rigorous data trust framework that tells you not just *how loud* a place is, but *how confident* you should be in that information.
 
-#### Εγκατάσταση από APK (Απλή Μέθοδος)
+---
 
-1. **Λήψη APK**
-   - Κατεβάστε το αρχείο `app-release.apk` από:
-     - από το φάκελο: `releases/app-release.apk`
+## Features
 
-2. **Ενεργοποίηση "Άγνωστων Πηγών"**
-   - Μεταβείτε στις **Ρυθμίσεις** → **Ασφάλεια**
-   - Ενεργοποιήστε την επιλογή **"Εγκατάσταση από άγνωστες πηγές"** ή **"Άγνωστες πηγές"**
-   - (Στο Android 8.0+: Ρυθμίσεις → Εφαρμογές και ειδοποιήσεις → Προχωρημένα → Ειδική πρόσβαση → Εγκατάσταση άγνωστων εφαρμογών)
+| Feature | Description |
+|---------|-------------|
+| 🗺️ **Interactive Noise Map** | Color-coded markers (5 noise levels) with real-time data overlays on Mapbox GL |
+| 📊 **Real-time dB Measurement** | 5-second sampling window with statistical averaging to eliminate transient spikes |
+| 🧠 **4-Tier Prediction Algorithm** | Temporal pattern analysis with exponential decay weighting ([details below](#data-trust-algorithm)) |
+| 🔒 **GPS-Verified Measurements** | Anti-spoofing: you can only measure where you physically are (50m radius verification) |
+| 🎵 **Smart Audio Focus** | Auto-pauses background music, detects call interruptions, ensures clean measurement environment |
+| 🤚 **3-Strike Motion Detection** | Accelerometer-based filtering to reject measurements contaminated by device movement |
+| 🗣️ **Voice Anomaly Detection** | Distinguishes ambient conversation from shouting (>80dB + high variance = rejected) |
+| ⭐ **Favorites & History** | Save and track noise patterns at your preferred locations |
+| 🔗 **Navigation Integration** | Long-press any pin to open directions in Google Maps |
 
-3. **Εγκατάσταση**
-   - Ανοίξτε το αρχείο APK από τον διαχειριστή αρχείων της συσκευής σας
-   - Πατήστε **"Εγκατάσταση"**
-   - Περιμένετε την ολοκλήρωση της εγκατάστασης
+---
 
-4. **Παροχή Αδειών**
-   - Κατά την πρώτη εκκίνηση, η εφαρμογή θα ζητήσει άδειες:
-     - ✅ **Τοποθεσία (Location)**: Απαραίτητη για την εμφάνιση χαρτών και κοντινών μερών
-     - ✅ **Μικρόφωνο (Microphone)**: Απαραίτητη για μετρήσεις επιπέδων θορύβου
-   - Επιλέξτε **"Να επιτρέπεται"** / **"Allow"** για όλες τις άδειες
+## Architecture
 
-### Πρώτα Βήματα Χρήσης
+<p align="center">
+  <img src="docs/images/architecture.png" alt="System Architecture" width="700"/>
+</p>
 
-#### 1. Σύνδεση (Login)
 ```
-Για εύκολη δοκιμή, χρησιμοποιήστε τον προ-δημιουργημένο λογαριασμό:
-👤 Username: test
-🔑 Password: test
-
-(Ή δημιουργήστε νέο λογαριασμό με την επιλογή "Sign Up")
+┌─────────────────┐     HTTPS/REST      ┌──────────────────┐      TLS/MySQL      ┌───────────────┐
+│  Flutter App     │ ◄──────────────────► │  Express API     │ ◄──────────────────► │  TiDB Cloud   │
+│  (Android)       │                      │  (Node.js)       │                      │  (Distributed │
+│                  │                      │                  │                      │   SQL)        │
+│  • Map Screen    │                      │  • /locations    │                      │  • users      │
+│  • Noise Meter   │                      │  • /measurements │                      │  • locations  │
+│  • GPS Verify    │                      │  • /auth         │                      │  • noise_     │
+│  • Predictions   │                      │  • /favorites    │                      │    measurements│
+└─────────────────┘                      └──────────────────┘                      └───────────────┘
 ```
 
-#### 2. Εξερεύνηση Χάρτη
-- Η κύρια οθόνη (Map Screen) εμφανίζει χάρτη με markers για τις τοποθεσίες
-- **Χρωματική κωδικοποίηση** (5 επίπεδα θορύβου):
-  - 🟢 **Επίπεδο 1** (< 40 dB): Πολύ ήσυχο - Ιδανικό για διάβασμα/εργασία
-  - 🟢 **Επίπεδο 2** (40-54 dB): Ήσυχο - Άνετο για συγκέντρωση
-  - 🟡 **Επίπεδο 3** (55-69 dB): Μέτριο - Κανονική ατμόσφαιρα καφετέριας
-  - 🟠 **Επίπεδο 4** (70-84 dB): Θορυβώδες - Δύσκολη συγκέντρωση
-  - 🔴 **Επίπεδο 5** (≥ 85 dB): Πολύ θορυβώδες - Όχι για εργασία
-- **Πατήστε σε ένα marker** για να δείτε λεπτομέρειες, επίπεδο θορύβου και βαθμό εμπιστοσύνης
+### Design Decisions
 
-#### 3. Προσθήκη Νέας Μέτρησης
-- Πατήστε το **"+" κουμπί** στο κάτω μέρος της οθόνης
-- 📍 **Σημαντικό**: Η μέτρηση γίνεται **ΜΟΝΟ για το σημείο όπου βρίσκεσαι** (πιστοποιείται από GPS)
-  - Δεν μπορείτε να κάνετε μέτρηση για μακρινή τοποθεσία
-  - Αυτό εξασφαλίζει την **αξιοπιστία** και **ακεραιότητα** των δεδομένων
-- Αυτόματα ξεκινά η μέτρηση θορύβου για την τρέχουσα θέση σας
-- Η μέτρηση διαρκεί **5 δευτερόλεπτα** και καταγράφει τον μέσο όρο θορύβου περιβάλλοντος
-- Αν βρίσκεσαι **κοντά** (< 50 μέτρα) σε ήδη εξερευνημένο μέρος:
-  - Μπορείς να επιλέξεις το υπάρχον μέρος (update measurements)
-  - Ή να δημιουργήσεις νέο μέρος
-- Αποθηκεύστε τη μέτρηση
-
-**⚠️ Σημαντικό για ακριβείς μετρήσεις:**
-- 🎵 **Smart Audio Focus**
-  - Παύση μουσικής (Spotify/YouTube) κατά τη μέτρηση
-  - Αυτόματη διακοπή σε εισερχόμενη κλήση
-
-- 💬 **Smart Error Feedback**: Το σύστημα εξηγεί **ακριβώς** γιατί απέτυχε μια μέτρηση:
-  - *"Audio interruption detected"* (αν δεχτείτε κλήση/ειδοποίηση)
-  - *"Too much movement"* (αν κουνηθείτε 3 φορές)
-  - *"Voice detected"* (αν μιλήσετε δυνατά κοντά στο μικρόφωνο)
-  - *"Could not acquire audio focus"* (αν είστε ήδη σε κλήση)
-- 🤚 Το φυσιολογικό τρεμούλιασμα του χεριού δεν επηρεάζει τη μέτρηση
-- 🎾 **3-Strikes Σύστημα**: Έντονη κίνηση ανιχνεύεται και επανεκκινεί το χρονόμετρο
-  - 1η-2η κίνηση: ⚠️ Warning + vibration + restart timer ("Settling... place phone down")
-  - 3η κίνηση: ❌ Αποτυχία μέτρησης ("Too much movement!")
-  - 🔄 **Retry**: Μπορείτε να επαναλάβετε τη μέτρηση με το κουμπί "Retry"
-- 🗣️ Η φωνή και οι ομιλίες ανιχνεύονται κανονικά (μετράει το περιβάλλον)
-  - 📢 Φώναγμα (>80dB + high variance): Αυτόματη αποτυχία με δυνατότητα retry
-- 🎤 **Δεν μετράει θόρυβο από το ίδιο το κινητό** (π.χ. χτύπημα στο τραπέζι)
-- 🔒 Αν το μικρόφωνο είναι ήδη σε χρήση από άλλη εφαρμογή, η μέτρηση δεν ξεκινά
-
-#### 4. Αγαπημένα (Favorites)
-- Προσθέστε μέρη στα αγαπημένα πατώντας το **εικονίδιο αστεριού**
-- Προβάλετε τα αγαπημένα σας από το **Favorites tab**
-
-#### 5. Λίστα Τοποθεσιών
-- Δείτε όλες τις διαθέσιμες τοποθεσίες στο **List tab**
-- Φιλτράρετε με βάση την απόσταση
-
-### Σενάρια Χρήσης
-
-**Σενάριο 1: Βρες ένα ήσυχο καφέ για διάβασμα**
-1. Ανοίξτε την εφαρμογή και δείτε τον χάρτη
-2. Αναζητήστε πράσινα markers (χαμηλός θόρυβος)
-3. Πατήστε σε ένα marker για να δείτε λεπτομέρειες
-4. Ελέγξτε το επίπεδο θορύβου και τον βαθμό εμπιστοσύνης
-5. Προσθέστε στα αγαπημένα για μελλοντική αναφορά
-
-**Σενάριο 2: Συνεισφορά δεδομένων**
-1. **Επισκεφθείτε** φυσικά ένα καφέ (απαιτείται GPS verification)
-2. Πατήστε το κουμπί "+"
-3. Η μέτρηση ξεκινά αυτόματα για την τρέχουσα θέση σας
-4. Επιλέξτε το μέρος από την λίστα κοντινών (< 50m) ή δημιουργήστε νέο
-5. Αποθηκεύστε - τα δεδομένα σας βοηθούν άλλους χρήστες!
-
-**Σενάριο 3: Εξερεύνηση αγαπημένων μερών**
-1. Μεταβείτε στο Favorites tab
-2. Δείτε τη λίστα με τα αγαπημένα σας μέρη
-3. Πατήστε για να δείτε λεπτομέρειες και τρέχοντα κατάσταση
-
-### Δεδομένα Επίδειξης (Demo Data Setup)
-Για την άμεση επίδειξη του **4-Tier Data Trust Policy**, η βάση δεδομένων έχει προ-φορτωθεί με **στρατηγικά δεδομένα** σε κεντρικά σημεία της Αθήνας (SQL script διαθέσιμο στο `databaseTiDB/insert.sql`):
-
-1.  **Fresh Data (Tier 1) 🟢**: 
-    - *Λώρας (Αμπελόκηποι)* & *Mokka (Κέντρο)*: Έχουν πρόσφατες μετρήσεις (< 1 ώρα) για να δείξουν το "Live" status.
-2.  **Confident Prediction (Tier 2) 🔵**:
-    - *Μελίνα (Πλάκα)* & *Κλεψύδρα*: Έχουν >40 μετρήσεις με ιστορικά patterns (π.χ. πρωινή φασαρία vs απογευματινή ησυχία) για την επίδειξη του αλγορίθμου πρόβλεψης.
-3.  **Moderate Confidence (Tier 3) 🟡**:
-    - *Coffee Stand* & *Veranda*: Έχουν 20-30 μετρήσεις για την επίδειξη του μεσαίου επιπέδου εμπιστοσύνης.
-4.  **Limited Data (Tier 4) 🟠**:
-    - *Starbucks* & *Maroco Cafe*: Έχουν λίγες μετρήσεις (<20) για να δείξουν την ανάγκη για περισσότερα δεδομένα.
-5.  **New Spots**:
-    - *Il Toto* & *Cusco*: Χωρίς μετρήσεις, έτοιμα για την πρώτη τους καταγραφή!
+- **TiDB Cloud** over plain MySQL: Horizontally scalable, MySQL-compatible — ready for city-scale data without migration. Free tier for MVP.
+- **Mapbox GL** over Google Maps: Better free tier, vector tiles, custom styling support. Loaded via `--dart-define` (no hardcoded tokens).
+- **Prediction on both client & server**: Server computes predictions for the list view (batch), client re-computes for detailed spot view (freshness). Both use the same algorithm.
+- **No JWT/session tokens (yet)**: Deliberate simplification for MVP. Auth state is stored client-side. The roadmap includes proper token-based auth.
 
 ---
 
-## Β. Τεχνικές Πληροφορίες
+## Data Trust Algorithm
 
-### Android SDK Version
-- **Minimum SDK**: API 23 (Android 6.0 - Marshmallow)
-- **Target SDK**: API 34 (Android 14)
-- **Compile SDK**: 34
+The core innovation: not all noise data is equally trustworthy. QuietSpot uses a **4-tier hierarchical prediction system** that adapts its algorithm based on data density.
 
-### Android Image Requirements
-- ✅ Λειτουργεί με standard Android images
-- ✅ Λειτουργεί με ή χωρίς Google Play Services
-- ⚠️ Απαιτείται σύνδεση Internet για backend API και χάρτες (Mapbox)
-
-### Βάσεις Δεδομένων / APIs
-- **Backend**: Node.js/Express API hosted στο Render
-  - URL: https://quietspot-api.onrender.com
-- **Database**: TiDB Cloud (MySQL-compatible)
-  - Αυτόματη διαχείριση, δεν απαιτείται ρύθμιση από τον χρήστη
-- **Maps**: Mapbox μέσω flutter_map
-  - Χρήση Mapbox tiles για υψηλής ποιότητας χάρτες
-  - Mapbox API token ενσωματωμένο στην εφαρμογή
-
-### Flutter/Dart Dependencies
-Βασικές βιβλιοθήκες που χρησιμοποιούνται:
-- `flutter_map`: Για διαδραστικούς χάρτες
-- `geolocator`: Για GPS και εντοπισμό θέσης
-- `noise_meter`: Για μέτρηση επιπέδων θορύβου
-- `http`: Για επικοινωνία με backend API
-- `shared_preferences`: Για τοπική αποθήκευση δεδομένων
-
-### Links
-
-#### 📦 APK Release
-- **Location**: Περιλαμβάνεται στο φάκελο υποβολής
-- **Path**: `releases/app-release.apk`
-- **Filename**: `app-release.apk`
-- **Size**: 53.2 MB
-- **Version**: 1.0.0
-
-#### 💻 Source Code Repository
-- **GitHub**: https://github.com/OrcBFF/quietspot1
-
-#### 🌐 Backend API
-- **Live Backend**: https://quietspot-api.onrender.com
-- **Status**: Λειτουργικό έως 7/2/2025
-
-### Δομή Φακέλων (Directory Structure)
 ```
-QuietSpot/
-├── quietspot/                  # Flutter Application Source Code
-│   ├── lib/                    # Dart code (Screens, Services, Models)
-│   └── build/app/.../release/  # Generated APK file
-├── backend/                    # Node.js/Express Server Code
-│   ├── routes/                 # API Endpoints
-│   └── server.js               # Entry point
-├── databaseTiDB/               # Database Scripts
-│   └── insert.sql              # SQL Schema & Demo Data
-└── README.md                   # Project Documentation
+                    ┌─────────────────────────────────┐
+                    │   Incoming Request for Spot X    │
+                    └──────────────┬──────────────────┘
+                                   │
+                    ┌──────────────▼──────────────────┐
+                    │  Latest measurement < 60 min?   │
+                    └──────────────┬──────────────────┘
+                          YES │           │ NO
+                              ▼           ▼
+                    ┌──────────────┐  ┌──────────────────┐
+                    │  TIER 1      │  │ Count measurements│
+                    │  Fresh Data  │  └────────┬─────────┘
+                    │  Use as-is   │           │
+                    └──────────────┘    ┌──────┴──────┐──────────┐
+                                        │             │          │
+                                   ≥40 meas.    20-39 meas.   <20 meas.
+                                        │             │          │
+                                        ▼             ▼          ▼
+                                  ┌──────────┐ ┌──────────┐ ┌──────────┐
+                                  │  TIER 2  │ │  TIER 3  │ │  TIER 4  │
+                                  │ Confident│ │ Moderate │ │ Limited  │
+                                  │ Predict. │ │ Predict. │ │  Data    │
+                                  └──────────┘ └──────────┘ └──────────┘
 ```
----
 
-## Γ. Διαφοροποιήσεις από το Πρωτότυπο Figma (Β' Φάση)
+### Tier Details
 
-### Κύριες Υλοποιημένες Λειτουργικότητες
+| Tier | Condition | Method | Confidence |
+|------|-----------|--------|------------|
+| **1 — Fresh** | Last measurement < 60 min | Use actual value | 🟢 Highest |
+| **2 — Confident** | ≥ 40 measurements | Temporal filtering + exponential decay | 🔵 High |
+| **3 — Moderate** | 20–39 measurements | Time-period filtering + recency weighting | 🟡 Medium |
+| **4 — Limited** | < 20 measurements | Simple arithmetic average | 🟠 Low |
 
-✅ **Οθόνη Χάρτη (Map Screen)**
-- Real-time markers για τοποθεσίες (pins)
-- Χρωματική κωδικοποίηση βάσει θορύβου (5 επίπεδα)
-- **Σημείωση**: Δεν υπάρχει κατηγοριοποίηση spots - όλες οι τοποθεσίες εμφανίζονται ως pins στον χάρτη
+### Tier 2: Confident Prediction (the interesting one)
 
-✅ **Σύστημα Μετρήσεων**
-- Real-time μέτρηση θορύβου με το μικρόφωνο
-- 📊 **Smart Averaging**: Καταγραφή δειγμάτων για 5 δευτερόλεπτα και υπολογισμός **μέσου όρου (AVG)** για την εξάλειψη στιγμιαίων αιχμών (spikes)
-- 📍 **GPS Verification**: Μετρήσεις μόνο για την τρέχουσα τοποθεσία (data integrity)
-- Αποθήκευση μετρήσεων στο cloud
-- Auto-refresh στον χάρτη μετά από μέτρηση
-- Auto-refresh κάθε 1 λεπτό στον χάρτη
+When we have 40+ data points, we apply **temporal pattern matching**:
 
-✅ **Data Trust Policy**
-- 4-tier σύστημα αξιοπιστίας δεδομένων (βλ. λεπτομερή ανάλυση παρακάτω)
-- Έξυπνη πρόβλεψη θορύβου βάσει ιστορικών δεδομένων και χρονικών patterns
-- Ενδείξεις εμπιστοσύνης (confidence indicators) με χρωματικά badges
+1. **Time-of-day matching** — Only consider measurements within ±2 hours of current time
+2. **Weekday vs. weekend** — Separate patterns (cafés behave differently on Saturdays)
+3. **30-day recency window** — Discard data older than 30 days
+4. **Exponential decay weighting** — `weight = e^(-days_ago / 10)`
+5. **14-day boost** — Measurements from the last 2 weeks get 2× weight
 
-✅ **User Authentication**
-- Sign up / Login functionality
-
-### Σύστημα Αξιοπιστίας Δεδομένων (Data Trust Policy)
-
-Το QuietSpot χρησιμοποιεί ένα **προηγμένο 4-tier σύστημα** για την πρόβλεψη επιπέδων θορύβου, με βάση τον αριθμό και την ηλικία των μετρήσεων:
-
-#### 🟢 Tier 1: Πρόσφατα Δεδομένα (< 60 λεπτά)
-- **Εμπιστοσύνη**: Πολύ Υψηλή
-- **Μέθοδος**: Χρήση της τελευταίας μέτρησης απευθείας
-- **Ένδειξη**: Πράσινο checkmark (✓)
-- **Περιγραφή**: Η πιο αξιόπιστη κατάσταση - τα δεδομένα είναι φρέσκα και αντικατοπτρίζουν την τρέχουσα κατάσταση
-
-#### 🔵 Tier 2: Έμπιστη Πρόβλεψη (40+ μετρήσεις)
-- **Εμπιστοσύνη**: Υψηλή
-- **Μέθοδος**: Προηγμένο temporal filtering με exponential decay
-- **Ένδειξη**: Μπλε εικονίδιο analytics
-- **Χαρακτηριστικά**:
-  - Matching ώρας ημέρας (πρωί vs απόγευμα)
-  - Ανάλυση καθημερινής vs Σαββατοκύριακου
-  - Μόνο τελευταίες 30 ημέρες
-  - 2x βαρύτητα για τις τελευταίες 14 ημέρες
-
-#### 🟡 Tier 3: Μέτρια Εμπιστοσύνη (20-39 μετρήσεις)
-- **Εμπιστοσύνη**: Μέτρια
-- **Μέθοδος**: Time period filtering με recency weighting
-- **Ένδειξη**: Κίτρινο εικονίδιο trending
-- **Περιγραφή**: Απλούστερη χρονική ανάλυση με ευρύτερα χρονικά παράθυρα
-
-#### 🟠 Tier 4: Περιορισμένα Δεδομένα (< 20 μετρήσεις)
-- **Εμπιστοσύνη**: Χαμηλή
-- **Μέθοδος**: Απλός μέσος όρος όλων των μετρήσεων
-- **Ένδειξη**: Πορτοκαλί question mark (?)
-- **Περιγραφή**: Για νέα καφέ ή σπάνια επισκεπτόμενες τοποθεσίες
-
-**💡 Γιατί είναι σημαντικό;**
-- Οι χρήστες βλέπουν όχι μόνο το επίπεδο θορύβου αλλά και **πόσο αξιόπιστο** είναι
-- Το σύστημα λαμβάνει υπόψη χρονικά patterns (πρωί vs βράδυ, καθημερινή vs Σ/Κ)
-- Πρόσφατες μετρήσεις έχουν **μεγαλύτερη βαρύτητα**
-- Διαφανής ένδειξη εμπιστοσύνης με χρωματικά badges
-
-
-### Αλλαγές από το Figma Prototype
-
-#### Προσθήκες
-- **Advanced Filtering**: Δυνατότητα σύνθετου φιλτραρίσματος τοποθεσιών με βάση:
-  - Απόσταση (Distance) στην προβολή λίστας
-  - Επίπεδο Θορύβου (Noise Level)
-  - Βαθμό Αξιοπιστίας (Data Trust)
-- **External Navigation Integration**: Λειτουργία "Long Press to Navigate" στα map pins, που ανοίγει απευθείας την τοποθεσία στο Google Maps για οδηγίες πλοήγησης
-- **Smart GPS Verification**: Μηχανισμός επαλήθευσης τοποθεσίας σε ακτίνα 50m για την εξασφάλιση της εγκυρότητας των νέων μετρήσεων
-- **Real-time Timestamp Visibility**: Οι χρήστες βλέπουν την ακριβή ώρα (Last Updated) της τελευταίας μέτρησης για κάθε pin, ενισχύοντας τη διαφάνεια
-
-#### Αφαιρέσεις/Απλοποιήσεις
-- **Search Bar**: Αφαιρέθηκε καθώς η εξερεύνηση γίνεται κυρίως γεωγραφικά (κοντινά σημεία)
-- **Gamification & Badges**: Αφαιρέθηκαν για να δοθεί έμφαση στην ποιότητα και αξιοπιστία των μετρήσεων (Data Trust) αντί για το κυνήγι πόντων
-- **User Roles (Visitor vs Contributor)**: Ενοποιήθηκαν σε έναν ρόλο χρήστη που μπορεί ταυτόχρονα να βλέπει και να συνεισφέρει (Crowdsourcing)
-- **Social Comments**: Αντικαταστάθηκαν από το 4-tier system για αντικειμενική αξιολόγηση μέσω δεδομένων (dB) αντί υποκειμενικών σχολίων
-
-#### Τεχνικοί Περιορισμοί
-
-
-### Χρησιμοποιούμενα Android Subsystems
-- 📍 **Location Services** (Geolocator): Για GPS και εντοπισμό θέσης χρήστη (GPS verification)
-- 🎤 **Microphone** (Noise Meter + Record Audio): Για μέτρηση επιπέδων θορύβου σε dB
-- 🎵 **Audio Session Manager**: Για διαχείριση audio focus, pause background music, και call interruptions
-- 🧭 **Sensors** (Accelerometer via sensors_plus): Για 3-strikes motion detection και αξιοπιστία μετρήσεων
-- 📳 **Vibration**: Για haptic feedback σε warnings και errors
-- 💾 **Shared Preferences**: Για local storage (user ID, device ID, settings)
-- 🌐 **Internet**: Για επικοινωνία με backend API και Mapbox tiles
-- 🔗 **URL Launcher**: Για άνοιγμα Google Maps (long-press on pin)
----
-
-## Πρόσθετες Πληροφορίες
-
-### Διαθεσιμότητα Υπηρεσιών
-- ✅ Backend API: Λειτουργικό έως **7/2/2025**
-- ✅ TiDB Cloud Database: Εξασφαλισμένη διαθεσιμότητα
-- ✅ Mapbox: Εμπορική υπηρεσία χαρτών (χρησιμοποιεί δεδομένα OpenStreetMap)
-  - Απαιτεί API token (ενσωματωμένο στην εφαρμογή)
-
-### Known Issues / Limitations
-
-#### Μετρήσεις Θορύβου
-- 📱 **Διαφορές μεταξύ συσκευών**: Οι μετρήσεις θορύβου μπορεί να διαφέρουν ανάλογα με τη συσκευή (ποιότητα μικροφώνου)
-- 🔊 **Περιβαλλοντικός θόρυβος μόνο**: Το σύστημα μετράει **μόνο τον περιβαλλοντικό θόρυβο**, όχι ήχους από το ίδιο το κινητό
-- 🎤 **Αποκλειστική χρήση μικροφώνου**: Αν άλλη εφαρμογή χρησιμοποιεί το μικρόφωνο, η μέτρηση δεν μπορεί να ξεκινήσει
-- 🎵 **Αυτόματο pause μουσικής**: Το background audio διακόπτεται προσωρινά κατά τη μέτρηση
-- 📞 **Διακοπή σε κλήση**: Εισερχόμενες/εξερχόμενες κλήσεις διακόπτουν αυτόματα τη μέτρηση
-- 🤚 **Ευαισθησία κίνησης**: Το φυσιολογικό τρεμούλιασμα δεν επηρεάζει, αλλά έντονη κίνηση ανιχνεύεται ως θόρυβος αέρα
-
-#### Απόδοση & Συνδεσιμότητα
-- ⏳ **Render Cold Start (Σημαντικό!)**: Επειδή το backend φιλοξενείται στο Free Tier του Render, μετά από περίοδο αδράνειας μπορεί να χρειαστούν **30-50 δευτερόλεπτα** για την πρώτη απόκριση (Cold Start). Παρακαλώ περιμένετε να φορτώσουν τα δεδομένα στην πρώτη εκκίνηση.
-- 🗺️ **Φόρτωση χάρτη**: Η πρώτη φόρτωση του χάρτη μπορεί να πάρει 5-10 δευτερόλεπτα
-- 📶 **Απαιτείται Internet**: Πλήρης λειτουργικότητα χρειάζεται σύνδεση Internet για backend και Mapbox tiles
-- 🔄 **Auto-refresh**: Ο χάρτης ανανεώνεται αυτόματα κάθε 1 λεπτό (μπορεί να προκαλέσει μικρό lag σε παλαιότερες συσκευές)
-- 🗺️ **Εξάρτηση από Mapbox**: Χωρίς Mapbox API token, ο χάρτης δεν εμφανίζεται (δεν υπάρχει fallback)
-
-### Support & Contact
-- **Email**: el20901@mail.ntua.gr
+This means a café that's quiet on weekday mornings but loud on Saturday nights will show **different predictions** depending on when you check.
 
 ---
 
-## Ομάδα Ανάπτυξης
+## Measurement Integrity Pipeline
 
-**Όνομα Ομάδας**: ΟΜΑΔΑ 65
+Every noise measurement passes through a multi-stage validation pipeline before it's accepted. This is designed with an **adversarial mindset** — assuming users might (intentionally or not) submit bad data.
 
-**Μέλη**:
-- Νικόλας Τσουκαλάς- ΑΜ 03120901
-- Ραφαηλία Πέτρου :  - ΑΜ el22090
+```
+┌──────────┐   ┌───────────────┐   ┌──────────────┐   ┌──────────────┐   ┌────────────┐
+│  Audio   │──►│    Motion     │──►│    Voice     │──►│     GPS      │──►│   Submit   │
+│  Focus   │   │  Detection    │   │  Filtering   │   │ Verification │   │  + Trust   │
+│  Acquire │   │  (3-Strike)   │   │              │   │              │   │   Score    │
+└──────────┘   └───────────────┘   └──────────────┘   └──────────────┘   └────────────┘
+     │                │                   │                   │                │
+  Pause BG         Strike 1-2:        >80dB +             Must be          Statistical
+  music/audio      Warning +          high variance       within 50m       outlier
+  Check for        vibrate +          = reject            of claimed       detection
+  active call      restart timer                          location         via z-score
+                   Strike 3:
+                   Fail measurement
+```
 
-**Περίοδος Ανάπτυξης**: Χειμερινό Εξάμηνο 2024-2025
+### Validation Parameters
 
-**Μάθημα**: Αλληλεπίδραση Ανθρώπου Υπολογιστή 7o εξάμηνο ΗΜΜΥ ΕΜΠ.
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| Reasonable dB range | 20–120 dB | Below 20 = sensor noise, above 120 = physical damage threshold |
+| Outlier threshold | 2.5σ | Standard z-score cutoff for statistical outlier detection |
+| Nearby radius | 100m | Cross-validate against neighboring spot measurements |
+| GPS verification | 50m | Maximum distance from spot to accept a measurement |
+| Measurement duration | 5 seconds | Long enough for stable average, short enough for user patience |
+| User trust weighting | 70/30 | 70% current measurement quality, 30% user's historical accuracy |
 
 ---
 
-## Μελλοντικές Επεκτάσεις
+## Tech Stack
 
-Πιθανές βελτιώσεις και νέα χαρακτηριστικά για μελλοντικές εκδόσεις:
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| **Mobile** | Flutter 3.x / Dart | Cross-platform ready, single codebase for Android (iOS planned) |
+| **Backend** | Node.js + Express | Lightweight REST API, async I/O for concurrent measurement submissions |
+| **Database** | TiDB Cloud (MySQL-compatible) | Distributed SQL — scales horizontally without changing queries |
+| **Maps** | Mapbox GL via flutter_map | Vector tiles, custom styling, generous free tier |
+| **Hosting** | Render | Auto-deploy from Git, free tier for MVP |
+| **Sensors** | noise_meter, geolocator, sensors_plus | Hardware abstraction for microphone, GPS, accelerometer |
 
-### Λειτουργικότητα
-- 📱 **Offline Mode**: Caching δεδομένων τοποθεσιών για χρήση χωρίς σύνδεση Internet
-- 🔔 **Push Notifications**: Ειδοποιήσεις όταν αλλάζει σημαντικά το noise level των αγαπημένων μερών
-- 🗺️ **Ενσωματωμένη Πλοήγηση**: Οδηγίες προς επιλεγμένο ήσυχο μέρος με Google Maps integration
-- 🎯 **Smart Recommendations**: AI-powered προτάσεις με βάση preferences και ιστορικό χρήστη
+---
 
-### Social & Community
-- 👥 **Social Sharing**: Κοινοποίηση αγαπημένων spots με φίλους και family
-- 💬 **Σχόλια & Κριτικές**: Επιπλέον πληροφορίες από την κοινότητα (π.χ. WiFi, πρίζες, φαγητό)
-- 🏆 **Gamification**: Badges και rewards για συνεισφορά μετρήσεων
+## Getting Started
 
-### Analytics & Προσωποποίηση
-- 📊 **Personal Dashboard**: Στατιστικά χρήσης, αγαπημένες ώρες/μέρη, ιστορικό μετρήσεων
-- 📈 **Noise Trends**: Γραφήματα εξέλιξης θορύβου κατά την ημέρα/εβδομάδα
-- ⚙️ **Προσωποποιημένα Φίλτρα**: Αποθήκευση προτιμήσεων filtering (π.χ. "μόνο <50dB")
+### Prerequisites
 
-### Επέκταση
-- 🌍 **Πολλαπλές Πόλεις**: Επέκταση σε Θεσσαλονίκη, Πάτρα, και άλλες πόλεις της Ελλάδας
-- 🏢 **Κατηγορίες Χώρων**: Υποστήριξη βιβλιοθηκών, coworking spaces, πάρκων
-- 🌐 **i18n**: Πολυγλωσσική υποστήριξη (Αγγλικά, Ελληνικά)
+- Android device (6.0+ / API 23+) or emulator
+- Internet connection (for API + map tiles)
 
-### Τεχνικές Βελτιώσεις
-- 🤖 **Machine Learning**: Πρόβλεψη θορύβου με neural networks
-- 🔄 **Real-time Updates**: WebSocket integration για live noise level updates
-- 📲 **Wear OS Support**: Εφαρμογή για smartwatches
+### Install from APK
+
+1. Download `app-release.apk` from [`releases/`](releases/)
+2. Enable "Install from unknown sources" on your device
+3. Install and grant **Location** + **Microphone** permissions
+
+### Build from Source
+
+```bash
+# Clone
+git clone https://github.com/OrcBFF/quietspot1.git
+cd quietspot1
+
+# Backend
+cd backend
+cp .env.example .env   # Fill in your TiDB Cloud credentials
+npm install
+npm start
+
+# Flutter app
+cd ../quietspot
+flutter pub get
+flutter run --dart-define=MAPBOX_ACCESS_TOKEN=your_token_here \
+            --dart-define=API_BASE_URL=http://10.0.2.2:3000  # for emulator
+```
+
+### Demo Account
+
+```
+Username: test
+Password: test
+```
+
+---
+
+## API Reference
+
+Base URL: `https://quietspot-api.onrender.com/api`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/locations` | List all spots with predicted noise levels |
+| `GET` | `/locations/:id` | Get spot details + prediction |
+| `POST` | `/locations` | Create new spot (with optional initial measurement) |
+| `PUT` | `/locations/:id` | Update spot metadata |
+| `DELETE` | `/locations/:id` | Delete spot |
+| `POST` | `/measurements` | Submit a noise measurement |
+| `GET` | `/measurements/location/:id` | Get measurement history for a spot |
+| `GET` | `/measurements/nearby` | Get measurements within radius (lat/lng/radius) |
+| `POST` | `/auth/signup` | Create account |
+| `POST` | `/auth/login` | Authenticate |
+| `POST` | `/auth/change-password` | Update password |
+| `GET` | `/favorites/user/:id` | Get user's favorites |
+| `POST` | `/favorites` | Add favorite |
+| `DELETE` | `/favorites/:userId/:locationId` | Remove favorite |
+| `GET` | `/health` | API health check |
+
+> **Note**: The backend runs on Render's free tier and may take ~20s to wake from cold start on first request. A production deployment would use a paid tier or alternative hosting to eliminate this.
+
+---
+
+## Noise Level Classification
+
+| Level | Range | Label | Color | Suitable For |
+|-------|-------|-------|-------|-------------|
+| 1 | < 40 dB | Very Quiet | 🟢 | Deep focus, reading, meditation |
+| 2 | 40–54 dB | Quiet | 🟢 | Studying, remote work |
+| 3 | 55–69 dB | Moderate | 🟡 | Casual work, meetings |
+| 4 | 70–84 dB | Loud | 🟠 | Socializing (not for work) |
+| 5 | ≥ 85 dB | Very Loud | 🔴 | Avoid for extended periods |
+
+---
+
+## Project Structure
+
+```
+quietspot1/
+├── quietspot/                    # Flutter mobile application
+│   └── lib/
+│       ├── main.dart             # App entry point
+│       ├── models/               # Data models (QuietSpot, NoiseLevel, etc.)
+│       ├── services/             # Business logic layer
+│       │   ├── api_service.dart              # REST API client
+│       │   ├── prediction_service.dart       # 4-tier prediction algorithm
+│       │   ├── measurement_validation_service.dart  # Integrity pipeline
+│       │   ├── noise_measurement_service.dart # Microphone interface
+│       │   ├── location_service.dart         # GPS services
+│       │   └── poi_service.dart              # Point-of-interest matching
+│       ├── screens/              # UI screens
+│       │   ├── map_screen.dart               # Main map view (28KB — the big one)
+│       │   ├── quick_add_spot_dialog.dart     # Measurement flow (26KB)
+│       │   ├── spot_detail_screen.dart        # Spot details + history
+│       │   └── ...                           # Auth, settings, favorites
+│       └── managers/             # State management
+├── backend/                      # Node.js REST API
+│   ├── server.js                 # Express entry point
+│   ├── db.js                     # TiDB Cloud connection pool
+│   └── routes/                   # API endpoint handlers
+│       ├── locations.js          # CRUD + prediction logic (server-side)
+│       ├── measurements.js       # Measurement submission + validation
+│       ├── auth.js               # Authentication endpoints
+│       ├── favorites.js          # User favorites
+│       └── users.js              # User management
+├── databaseTiDB/                 # Database scripts
+│   └── insert.sql                # Schema + seed data for demo
+└── docs/
+    └── images/                   # Architecture diagrams, banner
+```
+
+---
+
+## Roadmap
+
+### Near-term
+- [ ] Password hashing (bcrypt) — currently plaintext for MVP
+- [ ] JWT-based authentication with refresh tokens
+- [ ] Rate limiting and input sanitization (helmet + express-rate-limit)
+- [ ] Backend test suite (Jest)
+- [ ] Flutter widget and unit tests
+- [ ] CI/CD pipeline (GitHub Actions)
+- [ ] Google Play Store deployment
+
+### Medium-term
+- [ ] Gamification v1 — streaks, badges, contributor leaderboards
+- [ ] Offline mode with local caching and sync
+- [ ] Push notifications for favorite spot noise changes
+- [ ] Public REST API with API keys (SaaS foundation)
+- [ ] OpenAPI/Swagger documentation
+- [ ] iOS support
+
+### Long-term Vision
+- [ ] Noise data API for smart city applications
+- [ ] Partnerships with municipalities for urban noise monitoring
+- [ ] Integration with Google Maps / Apple Maps as a data layer
+- [ ] Medical noise monitoring (hospital quiet zones, occupational health)
+- [ ] ML-based prediction model (replacing heuristic tiers)
+
+---
+
+## Known Limitations
+
+| Issue | Status | Mitigation |
+|-------|--------|------------|
+| Cold start delay (~20s) | Known | Render free tier limitation; production would use paid hosting |
+| Device microphone variance | By design | Statistical averaging + cross-validation with nearby spots reduces impact |
+| Plaintext passwords | MVP trade-off | Bcrypt migration planned before public launch |
+| No offline support | Planned | Local caching with background sync on roadmap |
+| Android only | Current | Flutter enables iOS with minimal changes |
+
+---
+
+## Author
+
+**Nikolas Tsoukalas**
+NTUA — School of Electrical and Computer Engineering
+
+📧 el20901@mail.ntua.gr
 
 ---
 
 ## License
 
-This project is developed for educational purposes as part of an HCI course assignment.
+This project is proprietary software. All rights reserved.
+Unauthorized copying, modification, or distribution is not permitted without explicit written consent.
 
 ---
 
-**Ημερομηνία Τελευταίας Ενημέρωσης**: 18/1/2025
-
-**Έκδοση**: 1.0.0 (Phase 3 - Final Submission)
+<p align="center">
+  <sub>Built with ☕ and a quest for silence</sub>
+</p>
